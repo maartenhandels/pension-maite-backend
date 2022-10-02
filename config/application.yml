@@ -1,0 +1,19 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: postgres
+    password:
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate:
+        default_schema: pensionmaite
+
+server:
+  port: 8080
+
+logging:
+  level:
+    com.pensionmaite.pensionmaitebackend: DEBUG

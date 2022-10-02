@@ -15,8 +15,8 @@ import java.util.Set;
 public class Customer {
 
     @Id
-    @GeneratedValue
-    private long id;
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long id;
 
     private String name;
 

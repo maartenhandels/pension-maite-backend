@@ -16,8 +16,8 @@ import java.time.LocalDate;
 public class Reservation {
 
     @Id
-    @GeneratedValue
-    private long reservationId;
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long reservationId;
 
     private LocalDate checkinDate;
 
@@ -31,4 +31,9 @@ public class Reservation {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
+
+    public Reservation(LocalDate checkinDate, LocalDate checkoutDate) {
+        this.checkinDate = checkinDate;
+        this.checkoutDate = checkoutDate;
+    }
 }
