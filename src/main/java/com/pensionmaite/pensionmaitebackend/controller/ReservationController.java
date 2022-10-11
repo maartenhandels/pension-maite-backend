@@ -1,7 +1,7 @@
 package com.pensionmaite.pensionmaitebackend.controller;
 
 import com.pensionmaite.pensionmaitebackend.entity.Reservation;
-import com.pensionmaite.pensionmaitebackend.events.ReservationRequest;
+import com.pensionmaite.pensionmaitebackend.events.request.CreateReservationRequest;
 import com.pensionmaite.pensionmaitebackend.service.ReservationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,7 +17,7 @@ public class ReservationController {
     ReservationService reservationService;
 
     @PostMapping("/create")
-    private Reservation createReservation(@RequestBody ReservationRequest reservationRequest) {
+    private Reservation createReservation(@RequestBody CreateReservationRequest reservationRequest) {
         return reservationService.createReservation(reservationRequest);
     }
 }
