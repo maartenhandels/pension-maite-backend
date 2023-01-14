@@ -3,9 +3,8 @@ package com.pensionmaite.pensionmaitebackend.service.impl;
 import com.pensionmaite.pensionmaitebackend.entity.Reservation;
 import com.pensionmaite.pensionmaitebackend.entity.Room;
 import com.pensionmaite.pensionmaitebackend.events.request.CreateReservationRequest;
-import com.pensionmaite.pensionmaitebackend.exception.InvalidContactDataException;
+import com.pensionmaite.pensionmaitebackend.exception.DBException;
 import com.pensionmaite.pensionmaitebackend.exception.InvalidRequestException;
-import com.pensionmaite.pensionmaitebackend.model.ContactData;
 import com.pensionmaite.pensionmaitebackend.repository.ReservationRepo;
 import com.pensionmaite.pensionmaitebackend.service.ReservationService;
 import lombok.extern.log4j.Log4j2;
@@ -14,9 +13,10 @@ import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.Set;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.stream.Collectors;
 
-import static com.pensionmaite.pensionmaitebackend.util.EmailValidator.IsValidEmail;
 
 @Service
 @Log4j2
@@ -27,59 +27,53 @@ public class ReservationServiceImpl implements ReservationService {
 
 
     @Override
-    public Reservation createReservation(CreateReservationRequest reservationRequest) throws InvalidRequestException {
+    public Reservation createReservation(CreateReservationRequest createReservationRequest) throws InvalidRequestException, DBException {
 
-        log.debug(reservationRequest);
+        log.debug(createReservationRequest);
 
-        // Validate Data and availability
-        validateRequest(reservationRequest);
-        validateRoomsAvailability(reservationRequest.getRooms());
+        // Validate Availability
+        if(!areRoomsAvailable(createReservationRequest)) {
+            throw new InvalidRequestException("Rooms are not available for selected dates");
+        }
 
         // Create the Reservation Object
         Reservation reservation = new Reservation(
-                reservationRequest.getCheckinDate(),
-                reservationRequest.getCheckoutDate(),
-                reservationRequest.getContactData(),
+                createReservationRequest.getCheckinDate(),
+                createReservationRequest.getCheckoutDate(),
+                createReservationRequest.getContactData(),
                 Timestamp.from(Instant.now()),
-                reservationRequest.getRooms()
+                createReservationRequest.getRooms()
         );
 
         // Save into the db
-        return reservationRepo.save(reservation);
-    }
-
-    private void validateRequest(CreateReservationRequest reservationRequest) throws InvalidRequestException {
-        if (reservationRequest == null) {
-            throw new InvalidRequestException("Reservation info is missing");
-        }
-
-
-        if (reservationRequest.getRooms() == null) {
-            throw new InvalidRequestException("Rooms data is missing");
-        }
-
         try {
-            validateContactData(reservationRequest.getContactData());
-        } catch (InvalidContactDataException exception) {
-            throw new InvalidRequestException(exception.getMessage());
+            return reservationRepo.save(reservation);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw new DBException("Something went wrong while processing the request");
         }
     }
 
-    private void validateContactData(ContactData contactData) throws InvalidContactDataException {
+    private boolean areRoomsAvailable(CreateReservationRequest createReservationRequest) {
 
-        if (contactData == null) {
-            throw new InvalidContactDataException("Contact Data is missing");
+        for (Room room : createReservationRequest.getRooms()) {
+            if(!isRoomAvailable(room, createReservationRequest.getCheckinDate(), createReservationRequest.getCheckoutDate())) {
+                return false;
+            }
         }
-
-        if (contactData.getEmail() == null || !IsValidEmail(contactData.getEmail())) {
-            throw new InvalidContactDataException("Email is missing or invalid");
-        }
+        return true;
     }
 
-    private void validateRoomsAvailability(Set<Room> rooms) {
+    private boolean isRoomAvailable(Room room, LocalDate checkinDate, LocalDate checkoutDate) {
 
-        for (Room room : rooms) {
-
+        List<Reservation> reservations = reservationRepo.findReservationsBetweenDates(checkinDate, checkoutDate);
+        for (Reservation reservation:reservations) {
+            List<Integer> roomNumbers = reservation.getReservationRooms().stream().map(Room::getRoomNumber).collect(Collectors.toList());
+            log.debug("RoomNumbers: {}", roomNumbers);
+            if (roomNumbers.contains(room.getRoomNumber())) {
+                return false;
+            }
         }
+        return true;
     }
 }

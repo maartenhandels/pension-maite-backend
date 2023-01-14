@@ -1,11 +1,11 @@
 package com.pensionmaite.pensionmaitebackend.events.response;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.http.HttpStatus;
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
 @Data
+@NoArgsConstructor
 public class ApiResponse<T> {
 
     private T data;
@@ -13,4 +13,8 @@ public class ApiResponse<T> {
     private String error;
 
     private HttpStatus status;
+
+    public ApiResponse(T data) {
+        this.data = data;
+    }
 }
