@@ -4,9 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 
 import com.pensionmaite.pensionmaitebackend.entity.Reservation;
 import com.pensionmaite.pensionmaitebackend.entity.Room;
@@ -25,8 +23,10 @@ import com.pensionmaite.pensionmaitebackend.events.response.CreateReservationRes
 import com.pensionmaite.pensionmaitebackend.exception.DBException;
 import com.pensionmaite.pensionmaitebackend.exception.InvalidRequestException;
 import com.pensionmaite.pensionmaitebackend.service.ReservationService;
+import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
+@ActiveProfiles("test")
 class ReservationControllerTest {
 
     @Mock
