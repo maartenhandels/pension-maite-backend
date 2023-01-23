@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
@@ -19,13 +22,5 @@ jobs:
           java-version: 11
           distribution: 'adopt'
 
-      - name: Setup Maven
-        uses: stCarolas/setup-maven@v4.5
-        with:
-          maven-version: 3.8.2
-
       - name: Build with Maven
         run: mvn clean install
-
-      - name: Test with Maven
-        run: mvn test

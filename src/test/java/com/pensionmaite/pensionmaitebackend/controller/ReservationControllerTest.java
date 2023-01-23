@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 
@@ -29,6 +30,9 @@ import org.springframework.test.context.ActiveProfiles;
 @ActiveProfiles("test")
 class ReservationControllerTest {
 
+    @Value("${env}")
+    String test;
+
     @Mock
     private ReservationService reservationService;
 
@@ -37,6 +41,7 @@ class ReservationControllerTest {
 
     @BeforeEach
     void setUp() {
+        System.out.println(test);
         MockitoAnnotations.openMocks(this);
     }
 
