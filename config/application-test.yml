@@ -1,3 +1,4 @@
+env: 'testing'
 spring:
   datasource:
     vendor: H2
