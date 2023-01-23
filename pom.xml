@@ -11,7 +11,7 @@
 	<groupId>com.pensionmaite</groupId>
 	<artifactId>pension-maite-backend</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>pension-maite-backend</name>
+	<name>Pension-Maite-Backend</name>
 	<description>Backend for pension-maite-ui</description>
 	<properties>
 		<java.version>11</java.version>
@@ -73,6 +73,29 @@
 							<artifactId>lombok</artifactId>
 						</exclude>
 					</excludes>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>ch.acanda.maven</groupId>
+				<artifactId>spring-banner-plugin</artifactId>
+				<version>1.5.2</version>
+				<executions>
+					<execution>
+						<id>generate-spring-banner</id>
+						<phase>generate-resources</phase> <!--(1)-->
+						<goals>
+							<goal>generate</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration> <!--(2)-->
+					<text>${project.name}</text>
+					<outputDirectory>${project.build.outputDirectory}</outputDirectory>
+					<filename>banner.txt</filename>
+					<includeInfo>true</includeInfo>
+					<info>Version: ${project.version}, Port: ${server.port:8080}, Active Profiles: ${spring.profiles.active:none}</info>
+					<font>standard</font>
+					<color>default</color>
 				</configuration>
 			</plugin>
 		</plugins>
