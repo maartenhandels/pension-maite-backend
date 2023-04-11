@@ -16,10 +16,13 @@ public class CreateRoomTypeResponse {
 
     public Integer capacity;
 
+    public String imageFilename;
+
     public CreateRoomTypeResponse(RoomType roomType) {
         this.id = roomType.getId();
         this.name = roomType.getName();
         this.capacity = roomType.getCapacity();
+        this.imageFilename = roomType.getImageFilename();
     }
 
 }

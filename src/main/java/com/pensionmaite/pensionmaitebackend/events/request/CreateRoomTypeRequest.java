@@ -8,4 +8,6 @@ public class CreateRoomTypeRequest {
     public String name;
 
     public Integer capacity;
+
+    public String imageFilename;
 }

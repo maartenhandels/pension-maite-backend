@@ -28,7 +28,7 @@ public class RoomTypeServiceImpl implements RoomTypeService {
             throw new UniqueConstraintException("RoomType name must be unique");
         }
 
-        roomType = new RoomType(request.getName().toUpperCase(), request.getCapacity());
+        roomType = new RoomType(request.getName().toUpperCase(), request.getCapacity(), request.getImageFilename());
         roomType = roomTypeRepo.save(roomType);
 
         return new CreateRoomTypeResponse(roomType);
