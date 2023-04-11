@@ -13,7 +13,7 @@ public interface RoomService {
 
     CreateRoomResponse createRoom(CreateRoomRequest createRoomRequest);
 
-    List<Room> getAvailableRooms(AvailableRoomsRequest availableRoomsRequest);
+    List<Room> getAvailableRooms(LocalDate checkinDate, LocalDate checkoutDate);
 
     boolean areRoomsAvailable(List<Room> rooms, LocalDate checkinDate, LocalDate checkoutDate);
 }

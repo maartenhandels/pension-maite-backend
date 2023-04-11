@@ -16,6 +16,7 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.IterableUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -75,20 +76,6 @@ public class RoomServiceImpl implements RoomService {
     }
 
     /**
-     * Returns a list of available rooms based on the provided {@code AvailableRoomsRequest}.
-     *
-     * @param availableRoomsRequest the request containing the check-in and check-out dates
-     * @return a list of available {@code Room} objects
-     */
-    @Override
-    public List<Room> getAvailableRooms(AvailableRoomsRequest availableRoomsRequest) {
-
-        log.debug("AvailableRoomsRequest {}", availableRoomsRequest.toString());
-
-        return getAvailableRooms(availableRoomsRequest.getCheckinDate(), availableRoomsRequest.getCheckoutDate());
-    }
-
-    /**
      * Checks if all the rooms in the provided list are available during the specified check-in and check-out dates.
      *
      * @param rooms the list of rooms to check for availability
@@ -114,9 +101,10 @@ public class RoomServiceImpl implements RoomService {
      * @param checkoutDate the check-out date for the room availability period
      * @return a list of available {@code Room} objects
      */
-    private List<Room> getAvailableRooms(LocalDate checkinDate, LocalDate checkoutDate) {
+    @Override
+    public List<Room> getAvailableRooms(LocalDate checkinDate, LocalDate checkoutDate) {
 
-        log.info("Finding available rooms...");
+        log.debug("Finding available rooms for dates {} to {}", checkinDate, checkoutDate);
 
         // Retrieve a list of reservations between the provided check-in and check-out dates
         List<Reservation> reservations = reservationRepo.findReservationsBetweenDates(
