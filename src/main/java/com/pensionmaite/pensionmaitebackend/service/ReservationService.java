@@ -5,5 +5,5 @@ import com.pensionmaite.pensionmaitebackend.events.request.CreateReservationRequ
 
 public interface ReservationService {
 
-    public Reservation createReservation(CreateReservationRequest reservationRequest);
+    Reservation createReservation(CreateReservationRequest reservationRequest);
 }
