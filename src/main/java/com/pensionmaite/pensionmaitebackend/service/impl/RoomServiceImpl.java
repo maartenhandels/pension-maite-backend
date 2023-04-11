@@ -47,10 +47,10 @@ public class RoomServiceImpl implements RoomService {
     public CreateRoomResponse createRoom(CreateRoomRequest createRoomRequest) {
 
         // Retrieve the RoomType object associated with the provided room type name
-        RoomType roomType = roomTypeRepo.findByName(createRoomRequest.getRoomType().toUpperCase().trim());
+        Optional<RoomType> roomType = roomTypeRepo.findByName(createRoomRequest.getRoomType().toUpperCase().trim());
 
         // Throw an exception if the provided room type is invalid
-        if (roomType == null) {
+        if (roomType.isEmpty()) {
             throw new InvalidRequestException("Invalid room type provided");
         }
 
@@ -62,7 +62,7 @@ public class RoomServiceImpl implements RoomService {
         // Create a new Room object based on the provided details
         Room room = new Room(
                 createRoomRequest.getRoomNumber(),
-                roomType,
+                roomType.get(),
                 createRoomRequest.getDescription());
 
         // Save the new Room object to the repository
