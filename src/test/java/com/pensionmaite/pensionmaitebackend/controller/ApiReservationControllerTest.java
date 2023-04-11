@@ -28,7 +28,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
 @ActiveProfiles("test")
-class ReservationControllerTest {
+class ApiReservationControllerTest {
 
     @Value("${env}")
     String test;
@@ -37,7 +37,7 @@ class ReservationControllerTest {
     private ReservationService reservationService;
 
     @InjectMocks
-    private ReservationController reservationController;
+    private ApiReservationController reservationController;
 
     @BeforeEach
     void setUp() {
