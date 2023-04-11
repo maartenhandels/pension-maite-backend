@@ -10,10 +10,7 @@ import javax.persistence.*;
 import java.util.Set;
 
 
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
+@Data
 @Entity
 @Table(name = "room")
 public class Room {

@@ -9,8 +9,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 @Entity
 @Table(name = "pricing")
 public class Pricing {
