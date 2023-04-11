@@ -19,8 +19,8 @@ import java.util.List;
 
 @Log4j2
 @RestController
-@RequestMapping("/api/reservations")
-public class ReservationController {
+@RequestMapping("/api/reservation")
+public class ApiReservationController {
 
     @Autowired
     ReservationService reservationService;
