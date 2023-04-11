@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Set;
 
 @Data
+@NoArgsConstructor
 @Entity
 @Table(name = "room_type")
 public class RoomType {
@@ -37,15 +38,5 @@ public class RoomType {
         this.name = name;
         this.capacity = capacity;
         this.imageFilename = imageFilename;
-    }
-
-    @Override
-    public String toString() {
-        return "RoomType{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", capacity=" + capacity +
-                ", imageUrl='" + imageFilename + '\'' +
-                '}';
     }
 }
