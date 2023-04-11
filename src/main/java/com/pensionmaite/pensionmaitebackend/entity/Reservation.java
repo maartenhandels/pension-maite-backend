@@ -16,6 +16,7 @@ import java.util.Set;
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Entity
+@Table(name = "reservation")
 public class Reservation {
 
     @Id

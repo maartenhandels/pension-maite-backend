@@ -15,13 +15,14 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
+@Table(name = "room")
 public class Room {
 
     @Id
     private Integer roomNumber;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name="type_id", nullable=false)
+    @JoinColumn(name="room_type_id", nullable=false)
     private RoomType roomType;
 
     private String description;
