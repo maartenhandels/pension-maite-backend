@@ -19,6 +19,7 @@ public class Room {
     @Id
     private Integer roomNumber;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name="room_type_id", nullable=false)
     private RoomType roomType;
@@ -39,7 +40,7 @@ public class Room {
     public String toString() {
         return "Room{" +
                 "roomNumber=" + roomNumber +
-                ", roomType=" + roomType +
+                ", roomType=" + roomType.getName() +
                 ", description='" + description + '\'' +
                 '}';
     }
