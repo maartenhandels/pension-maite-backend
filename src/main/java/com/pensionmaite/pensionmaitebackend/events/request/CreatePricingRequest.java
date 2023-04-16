@@ -34,6 +34,10 @@ public class CreatePricingRequest {
             return Optional.of(Collections.singletonList("Either both dates must have a value or both must be empty"));
         }
 
+        if (createPricingRequest.getPrice() == null) {
+            return Optional.of(Collections.singletonList("Price can not be empty"));
+        }
+
         return Optional.empty();
     }
 

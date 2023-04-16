@@ -1,23 +1,28 @@
 package com.pensionmaite.pensionmaitebackend.service.impl;
 
+import com.pensionmaite.pensionmaitebackend.dto.AvailableRoomType;
+import com.pensionmaite.pensionmaitebackend.entity.Pricing;
 import com.pensionmaite.pensionmaitebackend.entity.Reservation;
 import com.pensionmaite.pensionmaitebackend.entity.Room;
 import com.pensionmaite.pensionmaitebackend.entity.RoomType;
-import com.pensionmaite.pensionmaitebackend.events.request.AvailableRoomsRequest;
-import com.pensionmaite.pensionmaitebackend.events.request.CreateReservationRequest;
 import com.pensionmaite.pensionmaitebackend.events.request.CreateRoomRequest;
+import com.pensionmaite.pensionmaitebackend.events.response.AvailableRoomResponse;
 import com.pensionmaite.pensionmaitebackend.events.response.CreateRoomResponse;
 import com.pensionmaite.pensionmaitebackend.exception.InvalidRequestException;
+import com.pensionmaite.pensionmaitebackend.exception.ValueNotFoundException;
 import com.pensionmaite.pensionmaitebackend.repository.ReservationRepo;
 import com.pensionmaite.pensionmaitebackend.repository.RoomRepo;
 import com.pensionmaite.pensionmaitebackend.repository.RoomTypeRepo;
+import com.pensionmaite.pensionmaitebackend.service.PricingService;
 import com.pensionmaite.pensionmaitebackend.service.RoomService;
+import com.pensionmaite.pensionmaitebackend.util.DatesUtil;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.IterableUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestParam;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -34,6 +39,9 @@ public class RoomServiceImpl implements RoomService {
 
     @Autowired
     ReservationRepo reservationRepo;
+
+    @Autowired
+    PricingService pricingService;
 
 
     /**
@@ -76,22 +84,30 @@ public class RoomServiceImpl implements RoomService {
     }
 
     /**
-     * Checks if all the rooms in the provided list are available during the specified check-in and check-out dates.
+     * Process the available rooms request based on the provided check-in and check-out dates.
      *
-     * @param rooms the list of rooms to check for availability
-     * @param checkinDate the check-in date for the room availability period
-     * @param checkoutDate the check-out date for the room availability period
-     * @return {@code true} if all the rooms are available during the specified period, {@code false} otherwise
+     * @param checkinDate the check-in date
+     * @param checkoutDate the check-out date
+     * @return the available room response with a list of available room types and their corresponding prices for the
+     * given dates
      */
     @Override
-    public boolean areRoomsAvailable(List<Room> rooms, LocalDate checkinDate, LocalDate checkoutDate) {
+    public AvailableRoomResponse processAvailableRoomsRequest(LocalDate checkinDate, LocalDate checkoutDate) {
 
-        for (Room room : rooms) {
-            if(!isRoomAvailable(room, checkinDate, checkoutDate)) {
-                return false;
-            }
-        }
-        return true;
+        AvailableRoomResponse availableRoomResponse = new AvailableRoomResponse();
+
+        List<Room> availableRooms = getAvailableRooms(checkinDate, checkoutDate);
+        availableRoomResponse.setAvailableRoomTypes(parseToAvailableRoomTypes(availableRooms));
+
+        availableRoomResponse.setAvailableRoomTypes(
+                setAvailableRoomTypesPricing(
+                        availableRoomResponse.getAvailableRoomTypes(),
+                        checkinDate,
+                        checkoutDate));
+
+        availableRoomResponse.setNumberOfNights(DatesUtil.getNumberOfNights(checkinDate, checkoutDate));
+
+        return availableRoomResponse;
     }
 
     /**
@@ -140,6 +156,25 @@ public class RoomServiceImpl implements RoomService {
     }
 
     /**
+     * Checks if all the rooms in the provided list are available during the specified check-in and check-out dates.
+     *
+     * @param rooms the list of rooms to check for availability
+     * @param checkinDate the check-in date for the room availability period
+     * @param checkoutDate the check-out date for the room availability period
+     * @return {@code true} if all the rooms are available during the specified period, {@code false} otherwise
+     */
+    @Override
+    public boolean areRoomsAvailable(List<Room> rooms, LocalDate checkinDate, LocalDate checkoutDate) {
+
+        for (Room room : rooms) {
+            if(!isRoomAvailable(room, checkinDate, checkoutDate)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
      * Determines whether the specified {@code Room} object is available for booking during the specified check-in and check-out dates.
      *
      * @param room the {@code Room} object to check availability for
@@ -164,4 +199,62 @@ public class RoomServiceImpl implements RoomService {
         // If the specified room is not reserved, return true
         return true;
     }
+
+    private List<AvailableRoomType> parseToAvailableRoomTypes(List<Room> rooms) {
+
+        // Key: roomType, Value: number of rooms available
+        Map<String, Integer> availableRoomTypes = countRoomsByType(rooms);
+
+        // Return a list of AvailableRoomType objects created with the Hashmap data
+        return availableRoomTypes.keySet()
+                .stream()
+                .map(type -> new AvailableRoomType(type, availableRoomTypes.get(type)))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Returns a HashMap where the key is the room type and the value is the number of rooms of that type
+     *
+     * @param rooms a List of Room objects to count by type
+     * @return a HashMap with keys representing each room type and values representing the number of rooms of that type
+     */
+    private Map<String, Integer> countRoomsByType(List<Room> rooms) {
+        // create a new HashMap to store the room type counts
+        Map<String, Integer> roomTypeCountMap = new HashMap<>();
+        // loop through each room in the list
+        for (Room room : rooms) {
+            // check if room type (and room type name) are not null
+            if (room.getRoomType() != null && StringUtils.isNotBlank(room.getRoomType().getName())) {
+                // get the current count for the room type from the roomTypeCountMap
+                Integer count = roomTypeCountMap.get(room.getRoomType().getName());
+                // initialize it to 0 if it doesn't exist yet
+                if (count == null) {
+                    count = 0;
+                }
+                // add the current room to the count for its room type in the roomTypeCountMap
+                roomTypeCountMap.put(room.getRoomType().getName(), count + 1);
+            } else {
+                log.error("Room {} has room type (or room type name) null", room);
+            }
+        }
+        // return the completed roomTypeCountMap
+        return roomTypeCountMap;
+    }
+
+    private List<AvailableRoomType> setAvailableRoomTypesPricing(List<AvailableRoomType> availableRoomTypes,
+                                                                 LocalDate checkinDate,
+                                                                 LocalDate checkoutDate) {
+        // loop over the roomTypes, and set the total price
+        for(AvailableRoomType availableRoomType:availableRoomTypes) {
+                availableRoomType.setTotalPrice(pricingService.getTotalStayPrice(
+                        availableRoomType.getRoomType(),
+                        checkinDate,
+                        checkoutDate));
+        }
+
+        return availableRoomTypes
+                .stream()
+                .filter(r -> r.getTotalPrice() != null).collect(Collectors.toList());
+    }
+
 }

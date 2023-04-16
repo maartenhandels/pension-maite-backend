@@ -1,13 +1,18 @@
 package com.pensionmaite.pensionmaitebackend.controller;
 
-import com.pensionmaite.pensionmaitebackend.entity.Room;
 import com.pensionmaite.pensionmaitebackend.events.response.ApiResponse;
+import com.pensionmaite.pensionmaitebackend.events.response.AvailableRoomResponse;
 import com.pensionmaite.pensionmaitebackend.exception.InvalidRequestException;
 import com.pensionmaite.pensionmaitebackend.service.RoomService;
+
 import lombok.extern.log4j.Log4j2;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
@@ -22,10 +27,10 @@ public class ApiRoomController {
     RoomService roomService;
 
     @GetMapping("/get-available")
-    private ApiResponse<List<Room>> getAvailableRooms(@RequestParam(required = true) String checkinDate,
-                                                      @RequestParam(required = true) String checkoutDate) {
+    private ApiResponse<AvailableRoomResponse> getAvailableRooms(@RequestParam(required = true) String checkinDate,
+                                                                        @RequestParam(required = true) String checkoutDate) {
 
-        ApiResponse<List<Room>> response = new ApiResponse<>();
+        ApiResponse<AvailableRoomResponse> response = new ApiResponse<>();
 
         boolean badRequest = false;
         LocalDate parsedCheckinDate = null;
@@ -52,7 +57,7 @@ public class ApiRoomController {
 
         // Process request if no request is valid
         try {
-            response.setData(roomService.getAvailableRooms(parsedCheckinDate, parsedCheckoutDate));
+            response.setData(roomService.processAvailableRoomsRequest(parsedCheckinDate, parsedCheckoutDate));
             response.setStatus(HttpStatus.OK);
         } catch (InvalidRequestException e) {
             response.setError(e.getMessage());

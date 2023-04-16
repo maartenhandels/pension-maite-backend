@@ -8,6 +8,7 @@ import javax.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+@NoArgsConstructor
 @Data
 @Entity
 @Table(name = "pricing")
@@ -30,4 +31,20 @@ public class Pricing {
 
     @Column(name = "price")
     private BigDecimal price;
+
+    public Pricing(RoomType roomType, BigDecimal price) {
+        this.roomType = roomType;
+        this.price = price;
+    }
+
+    @Override
+    public String toString() {
+        return "Pricing{" +
+                "id=" + id +
+                ", roomType=" + roomType.getName() +
+                ", startDate=" + startDate +
+                ", endDate=" + endDate +
+                ", price=" + price +
+                '}';
+    }
 }
