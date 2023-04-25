@@ -1,6 +1,5 @@
 package com.pensionmaite.pensionmaitebackend.events.request;
 
-import com.pensionmaite.pensionmaitebackend.entity.Room;
 import com.pensionmaite.pensionmaitebackend.model.ContactData;
 import com.pensionmaite.pensionmaitebackend.util.EmailValidator;
 import lombok.Data;
@@ -8,15 +7,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Data
 public class CreateReservationRequest {
 
-    private Set<Room> rooms;
+    // Key: RoomType name, Value: Number of rooms requested
+    private Map<String, Integer> requestedRoomTypes;
 
     private LocalDate checkinDate;
 
@@ -35,7 +32,7 @@ public class CreateReservationRequest {
         }
 
         List<String> errors = new ArrayList<>();
-        validateRooms(errors, createReservationRequest.getRooms());
+        validateRooms(errors, createReservationRequest.getRequestedRoomTypes());
         validateDates(errors, createReservationRequest.getCheckinDate(), createReservationRequest.getCheckoutDate());
         validateContactData(errors, createReservationRequest.getContactData());
 
@@ -46,9 +43,9 @@ public class CreateReservationRequest {
      * Checks if rooms list is valid (not null)
      * @param errors List of errors where error string will be added if found
      */
-    private static void validateRooms(List<String> errors, Set<Room> rooms) {
+    private static void validateRooms(List<String> errors, Map<String, Integer> rooms) {
         if (CollectionUtils.isEmpty(rooms)) {
-            errors.add("Rooms List can not be empty");
+            errors.add("Rooms Map can not be empty");
         }
     }
 

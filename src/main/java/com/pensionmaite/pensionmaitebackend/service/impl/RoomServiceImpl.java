@@ -10,6 +10,7 @@ import com.pensionmaite.pensionmaitebackend.events.response.AvailableRoomRespons
 import com.pensionmaite.pensionmaitebackend.events.response.CreateRoomResponse;
 import com.pensionmaite.pensionmaitebackend.exception.InvalidRequestException;
 import com.pensionmaite.pensionmaitebackend.exception.ValueNotFoundException;
+import com.pensionmaite.pensionmaitebackend.model.RoomTypeDetails;
 import com.pensionmaite.pensionmaitebackend.repository.ReservationRepo;
 import com.pensionmaite.pensionmaitebackend.repository.RoomRepo;
 import com.pensionmaite.pensionmaitebackend.repository.RoomTypeRepo;
@@ -97,13 +98,8 @@ public class RoomServiceImpl implements RoomService {
         AvailableRoomResponse availableRoomResponse = new AvailableRoomResponse();
 
         List<Room> availableRooms = getAvailableRooms(checkinDate, checkoutDate);
-        availableRoomResponse.setAvailableRoomTypes(parseToAvailableRoomTypes(availableRooms));
-
         availableRoomResponse.setAvailableRoomTypes(
-                setAvailableRoomTypesPricing(
-                        availableRoomResponse.getAvailableRoomTypes(),
-                        checkinDate,
-                        checkoutDate));
+                parseToAvailableRoomTypes(availableRooms, checkinDate, checkoutDate));
 
         availableRoomResponse.setNumberOfNights(DatesUtil.getNumberOfNights(checkinDate, checkoutDate));
 
@@ -122,37 +118,31 @@ public class RoomServiceImpl implements RoomService {
 
         log.debug("Finding available rooms for dates {} to {}", checkinDate, checkoutDate);
 
-        // Retrieve a list of reservations between the provided check-in and check-out dates
-        List<Reservation> reservations = reservationRepo.findReservationsBetweenDates(
-                checkinDate,
-                checkoutDate);
-
-        log.debug("Existing reservations: " + reservations);
-
-        // Create a set of room numbers for the reserved rooms
-        Set<Integer> reservedRoomNumbers = new HashSet<>();
-
-        // Add the room numbers for all reserved rooms to the set
-        for (Reservation reservation:reservations) {
-            reservedRoomNumbers.addAll(reservation.getReservationRooms()
-                    .stream()
-                    .map(Room::getRoomNumber)
-                    .collect(Collectors.toSet()));
-        }
-
-        log.debug("Associated Room Numbers: " + reservedRoomNumbers);
+        Set<Integer> reservedRoomNumbers = getReservedRoomNumbers(checkinDate, checkoutDate);
+        log.debug("Reserved Room Numbers: " + reservedRoomNumbers);
 
         // Retrieve all rooms from the room repository and filter out the reserved rooms
         List<Room> rooms = IterableUtils.toList(roomRepo.findAll());
-        log.debug("Rooms: " + rooms);
-        rooms = rooms.stream()
-                .filter(r -> !reservedRoomNumbers.contains(r.getRoomNumber()))
-                .collect(Collectors.toList());
 
-        log.debug("Available Rooms: " + rooms);
+        return filterReservedRooms(rooms, reservedRoomNumbers);
+    }
 
-        // Return the list of available rooms
-        return rooms;
+    @Override
+    public Map<String, List<Room>> getAvailableRoomsByTypes(LocalDate checkinDate,
+                                                            LocalDate checkoutDate,
+                                                            List<String> roomTypes) {
+
+        log.debug("Finding available rooms for dates {} to {}", checkinDate, checkoutDate);
+
+        Set<Integer> reservedRoomNumbers = getReservedRoomNumbers(checkinDate, checkoutDate);
+        log.debug("Reserved Room Numbers: " + reservedRoomNumbers);
+
+        // Retrieve all rooms from the room repository with matching type and filter out the reserved rooms
+        List<Room> rooms = IterableUtils.toList(roomRepo.findByCategoryNames(roomTypes));
+
+        rooms = filterReservedRooms(rooms, reservedRoomNumbers);
+
+        return mapRoomsByType(rooms);
     }
 
     /**
@@ -172,6 +162,54 @@ public class RoomServiceImpl implements RoomService {
             }
         }
         return true;
+    }
+
+    private Set<Integer> getReservedRoomNumbers(LocalDate checkinDate, LocalDate checkoutDate) {
+        // Retrieve a list of reservations between the provided check-in and check-out dates
+        List<Reservation> reservations = reservationRepo.findReservationsBetweenDates(
+                checkinDate,
+                checkoutDate);
+
+        log.debug("Existing reservations: " + reservations);
+
+        // Create a set of room numbers for the reserved rooms
+        Set<Integer> reservedRoomNumbers = new HashSet<>();
+
+        // Add the room numbers for all reserved rooms to the set
+        for (Reservation reservation:reservations) {
+            reservedRoomNumbers.addAll(reservation.getReservationRooms()
+                    .stream()
+                    .map(Room::getRoomNumber)
+                    .collect(Collectors.toSet()));
+        }
+
+        return reservedRoomNumbers;
+    }
+
+    private List<Room> filterReservedRooms(List<Room> rooms, Set<Integer> reservedRoomNumbers) {
+        return rooms.stream()
+                .filter(r -> !reservedRoomNumbers.contains(r.getRoomNumber()))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Maps a list of rooms by their room type name.
+     *
+     * @param rooms the list of rooms to map.
+     * @return a map where each key is a room type name and the corresponding value
+     *         is a list of rooms that have that room type.
+     */
+    private Map<String, List<Room>> mapRoomsByType(List<Room> rooms) {
+        Map<String, List<Room>> result = new HashMap<>();
+
+        for (Room room : rooms) {
+            String roomTypeName = room.getRoomType().getName();
+            List<Room> matchingRooms = result.getOrDefault(roomTypeName, new ArrayList<>());
+            matchingRooms.add(room);
+            result.put(roomTypeName, matchingRooms);
+        }
+
+        return result;
     }
 
     /**
@@ -200,16 +238,24 @@ public class RoomServiceImpl implements RoomService {
         return true;
     }
 
-    private List<AvailableRoomType> parseToAvailableRoomTypes(List<Room> rooms) {
+    private List<AvailableRoomType> parseToAvailableRoomTypes(List<Room> rooms,
+                                                              LocalDate checkinDate,
+                                                              LocalDate checkoutDate) {
 
         // Key: roomType, Value: number of rooms available
-        Map<String, Integer> availableRoomTypes = countRoomsByType(rooms);
+        Map<String, RoomTypeDetails> availableRoomsByType = getRoomsByType(rooms);
 
         // Return a list of AvailableRoomType objects created with the Hashmap data
-        return availableRoomTypes.keySet()
+        List<AvailableRoomType> availableRoomTypes = availableRoomsByType.values()
                 .stream()
-                .map(type -> new AvailableRoomType(type, availableRoomTypes.get(type)))
+                .map(type -> new AvailableRoomType(
+                        type.getRoomType().getName(),
+                        type.getRoomType().getCapacity(),
+                        type.getRoomType().getImageFilename(),
+                        type.getCount()))
                 .collect(Collectors.toList());
+
+        return setAvailableRoomTypesPricing(availableRoomTypes, checkinDate, checkoutDate);
     }
 
     /**
@@ -218,27 +264,29 @@ public class RoomServiceImpl implements RoomService {
      * @param rooms a List of Room objects to count by type
      * @return a HashMap with keys representing each room type and values representing the number of rooms of that type
      */
-    private Map<String, Integer> countRoomsByType(List<Room> rooms) {
+    private Map<String, RoomTypeDetails> getRoomsByType(List<Room> rooms) {
         // create a new HashMap to store the room type counts
-        Map<String, Integer> roomTypeCountMap = new HashMap<>();
+        Map<String, RoomTypeDetails> roomTypeMap = new HashMap<>();
         // loop through each room in the list
         for (Room room : rooms) {
+            RoomType roomType = room.getRoomType();
+
             // check if room type (and room type name) are not null
-            if (room.getRoomType() != null && StringUtils.isNotBlank(room.getRoomType().getName())) {
-                // get the current count for the room type from the roomTypeCountMap
-                Integer count = roomTypeCountMap.get(room.getRoomType().getName());
-                // initialize it to 0 if it doesn't exist yet
-                if (count == null) {
-                    count = 0;
+            if (roomType != null && StringUtils.isNotBlank(roomType.getName())) {
+                RoomTypeDetails roomTypeDetails = roomTypeMap.get(roomType.getName());
+                if (roomTypeDetails == null) {
+                    roomTypeDetails = new RoomTypeDetails();
+                    roomTypeDetails.setRoomType(roomType);
                 }
-                // add the current room to the count for its room type in the roomTypeCountMap
-                roomTypeCountMap.put(room.getRoomType().getName(), count + 1);
+
+                roomTypeDetails.setCount(roomTypeDetails.getCount() + 1);
+                roomTypeMap.put(roomType.getName(), roomTypeDetails);
             } else {
                 log.error("Room {} has room type (or room type name) null", room);
             }
         }
         // return the completed roomTypeCountMap
-        return roomTypeCountMap;
+        return roomTypeMap;
     }
 
     private List<AvailableRoomType> setAvailableRoomTypesPricing(List<AvailableRoomType> availableRoomTypes,
