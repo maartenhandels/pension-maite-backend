@@ -26,9 +26,9 @@ public class RoomType {
 
     private String imageFilename;
 
-    @JsonIgnore
-    @OneToMany(mappedBy="roomType")
-    private Set<Room> rooms;
+//    @JsonIgnore
+//    @OneToMany(mappedBy="roomType")
+//    private Set<Room> rooms;
 
     @JsonIgnore
     @OneToMany(mappedBy = "roomType")

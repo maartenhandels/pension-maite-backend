@@ -295,7 +295,7 @@ public class RoomServiceImpl implements RoomService {
         // loop over the roomTypes, and set the total price
         for(AvailableRoomType availableRoomType:availableRoomTypes) {
                 availableRoomType.setTotalPrice(pricingService.getTotalStayPrice(
-                        availableRoomType.getRoomType(),
+                        Map.of(availableRoomType.getRoomType(), 1),
                         checkinDate,
                         checkoutDate));
         }

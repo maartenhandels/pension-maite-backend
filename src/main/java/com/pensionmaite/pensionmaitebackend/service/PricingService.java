@@ -6,6 +6,8 @@ import com.pensionmaite.pensionmaitebackend.events.request.CreatePricingRequest;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 public interface PricingService {
 
@@ -15,5 +17,5 @@ public interface PricingService {
 
     List<Pricing> getRoomTypePrice(String roomType);
 
-    BigDecimal getTotalStayPrice(String roomType, LocalDate checkinDate, LocalDate checkoutDate);
+    BigDecimal getTotalStayPrice(Map<String, Integer> roomTypes, LocalDate checkinDate, LocalDate checkoutDate);
 }

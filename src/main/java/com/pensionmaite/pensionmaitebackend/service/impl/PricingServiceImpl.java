@@ -4,6 +4,7 @@ import com.pensionmaite.pensionmaitebackend.entity.Pricing;
 import com.pensionmaite.pensionmaitebackend.entity.RoomType;
 import com.pensionmaite.pensionmaitebackend.events.request.CreatePricingRequest;
 import com.pensionmaite.pensionmaitebackend.exception.InvalidRequestException;
+import com.pensionmaite.pensionmaitebackend.exception.ValueNotFoundException;
 import com.pensionmaite.pensionmaitebackend.repository.PricingRepo;
 import com.pensionmaite.pensionmaitebackend.service.PricingService;
 import com.pensionmaite.pensionmaitebackend.service.RoomTypeService;
@@ -14,10 +15,8 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Log4j2
@@ -89,46 +88,22 @@ public class PricingServiceImpl implements PricingService {
     }
 
     @Override
-    public BigDecimal getTotalStayPrice(String roomType, LocalDate checkinDate, LocalDate checkoutDate) {
+    public BigDecimal getTotalStayPrice(Map<String, Integer> roomTypes, LocalDate checkinDate, LocalDate checkoutDate) {
 
-        log.info("Calculating total stay for a {} room, from the {} to {}", roomType, checkinDate, checkoutDate);
+        log.info("Calculating total stay for {} rooms, from the {} to {}",
+                roomTypes.size(), checkinDate, checkoutDate);
 
         // get the price list
-        List<Pricing> pricingList = pricingRepo.findOverlappingPricingsForRoomType(roomType, checkinDate, checkoutDate);
-        log.debug("Pricing List size: {}", pricingList.size());
+        Map<String, List<Pricing>> roomTypePricings = roomTypes.entrySet()
+                .stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> pricingRepo.findOverlappingPricingsForRoomType(entry.getKey(), checkinDate, checkoutDate)
+                ));
+        log.debug("Pricing Map: {}", roomTypePricings);
 
-        // initialize the totalPrice variable
-        BigDecimal totalPrice = BigDecimal.ZERO;
-
-        // if the price list is empty try getting the default, if not available log an error and return null
-        if (pricingList.size() == 0) {
-            Optional<Pricing> defaultPricing = pricingRepo.findDefaultPricingForRoomType(roomType);
-            if (defaultPricing.isEmpty()) {
-                log.error("Pricing not found for room Type {}", roomType);
-                totalPrice = null;
-            }else {
-                totalPrice = BigDecimal.valueOf(DatesUtil.getNumberOfNights(checkinDate, checkoutDate))
-                        .multiply(defaultPricing.get().getPrice());
-            }
-        } else {
-            // Calculate the total price summing the price per night
-            if (pricingList.size() > 1) {
-                for (LocalDate date = checkinDate; date.isBefore(checkoutDate); date = date.plusDays(1)) {
-                    for (Pricing pricing : pricingList) {
-                        if (pricing.getStartDate().isBefore(date) &&
-                                (pricing.getEndDate() == null || pricing.getEndDate().isAfter(date))) {
-                            totalPrice = totalPrice.add(pricing.getPrice());
-                            break;
-                        }
-                    }
-                }
-            } else {
-                totalPrice = BigDecimal.valueOf(DatesUtil.getNumberOfNights(checkinDate, checkoutDate))
-                        .multiply(pricingList.get(0).getPrice());
-            }
-        }
-
-        return totalPrice;
+        return calculatePriceForRoomTypesWithPricing(
+                roomTypes, roomTypePricings, checkinDate, checkoutDate);
     }
 
     private Pricing createPricingEntity(CreatePricingRequest createPricingRequest) throws InvalidRequestException {
@@ -180,5 +155,55 @@ public class PricingServiceImpl implements PricingService {
         }
 
         return null;
+    }
+
+    private BigDecimal calculatePriceForRoomTypesWithPricing(
+            Map<String, Integer> roomTypes,
+            Map<String, List<Pricing>> roomTypePricings,
+            LocalDate checkinDate,
+            LocalDate checkoutDate) {
+
+        // initialize the totalPrice variable
+        BigDecimal totalPrice = BigDecimal.ZERO;
+
+        for (String roomType:roomTypes.keySet()) {
+            List<Pricing> roomTypePricing = roomTypePricings.get(roomType);
+            roomTypePricing = roomTypePricing.stream().filter(p -> p.getPrice() != null).collect(Collectors.toList());
+            BigDecimal numberOfRoomsOfType = BigDecimal.valueOf(roomTypes.get(roomType));
+
+            // if the price list is empty try getting the default, if not available log an error and return null
+            if (roomTypePricing.size() == 0) {
+                Optional<Pricing> defaultPricing = pricingRepo.findDefaultPricingForRoomType(roomType);
+                if (defaultPricing.isEmpty()) {
+                    throw new ValueNotFoundException("Pricing not found for room Type: " + roomType);
+                }else {
+                    // Add to total price numOfNights * Default Price * number of rooms of same type
+                    totalPrice = totalPrice.add(
+                            BigDecimal.valueOf(DatesUtil.getNumberOfNights(checkinDate, checkoutDate))
+                                    .multiply(defaultPricing.get().getPrice())
+                                    .multiply(numberOfRoomsOfType)
+                    );
+                }
+            } else if(roomTypePricing.size() == 1) {
+                totalPrice = totalPrice.add(
+                        BigDecimal.valueOf(DatesUtil.getNumberOfNights(checkinDate, checkoutDate))
+                                .multiply(roomTypePricing.get(0).getPrice())
+                                .multiply(numberOfRoomsOfType)
+                );
+            } else {
+                // Calculate the total price summing the price per night
+                for (LocalDate date = checkinDate; date.isBefore(checkoutDate); date = date.plusDays(1)) {
+                    for (Pricing pricing : roomTypePricing) {
+                        if (pricing.getStartDate().isBefore(date) &&
+                                (pricing.getEndDate() == null || pricing.getEndDate().isAfter(date))) {
+                            totalPrice = totalPrice.add(pricing.getPrice().multiply(numberOfRoomsOfType));
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        return totalPrice;
     }
 }

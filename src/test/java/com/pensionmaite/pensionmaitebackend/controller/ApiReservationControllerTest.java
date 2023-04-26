@@ -50,7 +50,7 @@ class ApiReservationControllerTest {
         CreateReservationRequest reservationRequest = new CreateReservationRequest();
         reservationRequest.setCheckinDate(LocalDate.parse("2023-01-10"));
         reservationRequest.setCheckoutDate(LocalDate.parse("2023-01-12"));
-        reservationRequest.setRooms(Collections.singleton(new Room()));
+//        reservationRequest.setRooms(Collections.singleton(new Room()));
         reservationRequest.setContactData(new ContactData("test@gmail.com", "test", "test", "12312123"));
 
         System.out.println(reservationRequest);
@@ -91,7 +91,7 @@ class ApiReservationControllerTest {
         CreateReservationRequest reservationRequest = new CreateReservationRequest();
         reservationRequest.setCheckinDate(LocalDate.parse("2023-01-10"));
         reservationRequest.setCheckoutDate(LocalDate.parse("2023-01-12"));
-        reservationRequest.setRooms(Collections.singleton(new Room()));
+//        reservationRequest.setRooms(Collections.singleton(new Room()));
         reservationRequest.setContactData(new ContactData("test@gmail.com", "test", "test", "12312123"));
 
         when(reservationService.createReservation(reservationRequest)).thenThrow(InvalidRequestException.class);
@@ -109,7 +109,7 @@ class ApiReservationControllerTest {
         CreateReservationRequest reservationRequest = new CreateReservationRequest();
         reservationRequest.setCheckinDate(LocalDate.parse("2023-01-10"));
         reservationRequest.setCheckoutDate(LocalDate.parse("2023-01-12"));
-        reservationRequest.setRooms(Collections.singleton(new Room()));
+//        reservationRequest.setRooms(Collections.singleton(new Room()));
         reservationRequest.setContactData(new ContactData("test@gmail.com", "test", "test", "12312123"));
 
         when(reservationService.createReservation(reservationRequest)).thenThrow(DBException.class);

@@ -13,7 +13,7 @@ import java.util.*;
 public class CreateReservationRequest {
 
     // Key: RoomType name, Value: Number of rooms requested
-    private Map<String, Integer> requestedRoomTypes;
+    private Map<String, Integer> roomTypes;
 
     private LocalDate checkinDate;
 
@@ -32,7 +32,7 @@ public class CreateReservationRequest {
         }
 
         List<String> errors = new ArrayList<>();
-        validateRooms(errors, createReservationRequest.getRequestedRoomTypes());
+        validateRooms(errors, createReservationRequest.getRoomTypes());
         validateDates(errors, createReservationRequest.getCheckinDate(), createReservationRequest.getCheckoutDate());
         validateContactData(errors, createReservationRequest.getContactData());
 
@@ -86,7 +86,6 @@ public class CreateReservationRequest {
 
         if (!EmailValidator.IsValidEmail(contactData.getEmail())) {
             errors.add("Email is not valid");
-            return;
         }
     }
 }

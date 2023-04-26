@@ -38,8 +38,7 @@ public class Reservation {
 
     private Timestamp reservationDate;
 
-    @Transient
-    private BigDecimal price;
+    private BigDecimal totalPrice;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -48,7 +47,8 @@ public class Reservation {
             inverseJoinColumns = @JoinColumn(name = "roomNumber"))
     private Set<Room> reservationRooms;
 
-    public Reservation(LocalDate checkinDate, LocalDate checkoutDate, ContactData contactData, Timestamp reservationDate, Set<Room> reservationRooms) {
+    public Reservation(LocalDate checkinDate, LocalDate checkoutDate, ContactData contactData,
+                       Timestamp reservationDate, BigDecimal totalPrice, Set<Room> reservationRooms) {
         this.checkinDate = checkinDate;
         this.checkoutDate = checkoutDate;
         if (contactData != null) {
@@ -58,6 +58,7 @@ public class Reservation {
             this.phone = contactData.getPhone();
         }
         this.reservationDate = reservationDate;
+        this.totalPrice = totalPrice;
         this.reservationRooms = reservationRooms;
     }
 
@@ -72,7 +73,7 @@ public class Reservation {
                 ", lastName='" + lastName + '\'' +
                 ", phone='" + phone + '\'' +
                 ", reservationDate=" + reservationDate +
-                ", price=" + price +
+                ", price=" + totalPrice +
                 '}';
     }
 }

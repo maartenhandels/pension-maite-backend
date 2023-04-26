@@ -16,5 +16,5 @@ public interface RoomRepo extends CrudRepository<Room, Integer> {
     List<Room> findAllByRoomType(String roomType);
 
     @Query("SELECT r FROM Room r WHERE r.roomType.name IN :roomTypes")
-    List<Room> findByCategoryNames(@Param("categoryNames") List<String> roomTypes);
+    List<Room> findByCategoryNames(@Param("roomTypes") List<String> roomTypes);
 }

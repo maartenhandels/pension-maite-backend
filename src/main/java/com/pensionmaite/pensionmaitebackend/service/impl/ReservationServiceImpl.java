@@ -6,12 +6,14 @@ import com.pensionmaite.pensionmaitebackend.events.request.CreateReservationRequ
 import com.pensionmaite.pensionmaitebackend.exception.DBException;
 import com.pensionmaite.pensionmaitebackend.exception.InvalidRequestException;
 import com.pensionmaite.pensionmaitebackend.repository.ReservationRepo;
+import com.pensionmaite.pensionmaitebackend.service.PricingService;
 import com.pensionmaite.pensionmaitebackend.service.ReservationService;
 import com.pensionmaite.pensionmaitebackend.service.RoomService;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.*;
@@ -26,6 +28,9 @@ public class ReservationServiceImpl implements ReservationService {
     @Autowired
     RoomService roomService;
 
+    @Autowired
+    PricingService pricingService;
+
 
     @Override
     public Reservation createReservation(CreateReservationRequest createReservationRequest)
@@ -33,7 +38,8 @@ public class ReservationServiceImpl implements ReservationService {
 
         log.debug(createReservationRequest);
 
-        Map<String, Integer> requestedRoomTypes = createReservationRequest.getRequestedRoomTypes();
+        Map<String, Integer> requestedRoomTypes = createReservationRequest.getRoomTypes();
+        log.debug("Room Types: {}", requestedRoomTypes);
 
         // Get Available Rooms By Type
         Map<String, List<Room>> availableRoomsByType = roomService.getAvailableRoomsByTypes(
@@ -41,16 +47,21 @@ public class ReservationServiceImpl implements ReservationService {
                 createReservationRequest.getCheckoutDate(),
                 new ArrayList<>(requestedRoomTypes.keySet()));
 
+        log.debug("Available Rooms: {}", availableRoomsByType);
+
         Set<Room> roomsToBeReserved = new HashSet<>();
 
         for (String roomType:requestedRoomTypes.keySet()) {
             List<Room> availableRooms = availableRoomsByType.getOrDefault(roomType, new ArrayList<>());
             if (availableRooms.size() >= requestedRoomTypes.get(roomType)) {
-                roomsToBeReserved.addAll(availableRooms.subList(0, requestedRoomTypes.get(roomType) + 1));
+                roomsToBeReserved.addAll(availableRooms.subList(0, requestedRoomTypes.get(roomType)));
             } else {
                 throw new InvalidRequestException("Requested Rooms are not available for the selected dates");
             }
         }
+
+        BigDecimal reservationTotalPrice = pricingService.getTotalStayPrice(requestedRoomTypes,
+                createReservationRequest.getCheckinDate(), createReservationRequest.getCheckoutDate());
 
         // Create the Reservation Object
         Reservation reservation = new Reservation(
@@ -58,6 +69,7 @@ public class ReservationServiceImpl implements ReservationService {
                 createReservationRequest.getCheckoutDate(),
                 createReservationRequest.getContactData(),
                 Timestamp.from(Instant.now()),
+                reservationTotalPrice,
                 roomsToBeReserved
         );
 
