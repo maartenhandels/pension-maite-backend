@@ -1,14 +1,18 @@
 package com.pensionmaite.pensionmaitebackend.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
-import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 
-import com.pensionmaite.pensionmaitebackend.entity.Reservation;
+import com.pensionmaite.pensionmaitebackend.dto.ReservedRoomType;
 import com.pensionmaite.pensionmaitebackend.entity.Room;
+import com.pensionmaite.pensionmaitebackend.entity.RoomType;
 import com.pensionmaite.pensionmaitebackend.model.ContactData;
+import com.pensionmaite.pensionmaitebackend.repository.ReservationRepo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -20,7 +24,7 @@ import org.springframework.http.HttpStatus;
 
 import com.pensionmaite.pensionmaitebackend.events.request.CreateReservationRequest;
 import com.pensionmaite.pensionmaitebackend.events.response.ApiResponse;
-import com.pensionmaite.pensionmaitebackend.events.response.CreateReservationResponse;
+import com.pensionmaite.pensionmaitebackend.events.response.ReservationConfirmation;
 import com.pensionmaite.pensionmaitebackend.exception.DBException;
 import com.pensionmaite.pensionmaitebackend.exception.InvalidRequestException;
 import com.pensionmaite.pensionmaitebackend.service.ReservationService;
@@ -36,6 +40,9 @@ class ApiReservationControllerTest {
     @Mock
     private ReservationService reservationService;
 
+    @Mock
+    private ReservationRepo reservationRepo;
+
     @InjectMocks
     private ApiReservationController reservationController;
 
@@ -50,24 +57,26 @@ class ApiReservationControllerTest {
         CreateReservationRequest reservationRequest = new CreateReservationRequest();
         reservationRequest.setCheckinDate(LocalDate.parse("2023-01-10"));
         reservationRequest.setCheckoutDate(LocalDate.parse("2023-01-12"));
-//        reservationRequest.setRooms(Collections.singleton(new Room()));
+        reservationRequest.setRoomTypes(Map.of("DOUBLE", 1));
         reservationRequest.setContactData(new ContactData("test@gmail.com", "test", "test", "12312123"));
 
-        System.out.println(reservationRequest);
+        Room room = new Room();
+        room.setRoomType(new RoomType("DOUBLE", 2, "imageFilename.png"));
 
-        Reservation reservation = new Reservation();
-        reservation.setReservationId(1L);
+        ReservationConfirmation reservationConfirmation = new ReservationConfirmation();
+        reservationConfirmation.setReservationId("ABC123");
+        reservationConfirmation.setCheckinDate(reservationRequest.getCheckinDate());
+        reservationConfirmation.setCheckoutDate(reservationRequest.getCheckoutDate());
+        reservationConfirmation.setReservedRoomTypes(ReservedRoomType.parseRoomListToReservedRoomTypeList(Set.of(room)));
+        reservationConfirmation.setContactData(reservationRequest.getContactData());
 
-        CreateReservationResponse createReservationResponse = new CreateReservationResponse();
-        createReservationResponse.setReservation(reservation);
+        when(reservationService.createReservation(reservationRequest)).thenReturn(reservationConfirmation);
 
-        when(reservationService.createReservation(reservationRequest)).thenReturn(reservation);
-
-        ApiResponse<CreateReservationResponse> expectedResponse = new ApiResponse<>();
-        expectedResponse.setData(createReservationResponse);
+        ApiResponse<ReservationConfirmation> expectedResponse = new ApiResponse<>();
+        expectedResponse.setData(reservationConfirmation);
         expectedResponse.setStatus(HttpStatus.OK);
 
-        ApiResponse<CreateReservationResponse> actualResponse = reservationController.createReservation(reservationRequest);
+        ApiResponse<ReservationConfirmation> actualResponse = reservationController.createReservation(reservationRequest);
 
         assertEquals(expectedResponse, actualResponse);
     }
@@ -78,10 +87,10 @@ class ApiReservationControllerTest {
 
         when(reservationService.createReservation(reservationRequest)).thenThrow(InvalidRequestException.class);
 
-        ApiResponse<CreateReservationResponse> expectedResponse = new ApiResponse<>();
+        ApiResponse<ReservationConfirmation> expectedResponse = new ApiResponse<>();
         expectedResponse.setStatus(HttpStatus.BAD_REQUEST);
 
-        ApiResponse<CreateReservationResponse> actualResponse = reservationController.createReservation(reservationRequest);
+        ApiResponse<ReservationConfirmation> actualResponse = reservationController.createReservation(reservationRequest);
 
         assertEquals(expectedResponse.getStatus(), actualResponse.getStatus());
     }
@@ -96,10 +105,10 @@ class ApiReservationControllerTest {
 
         when(reservationService.createReservation(reservationRequest)).thenThrow(InvalidRequestException.class);
 
-        ApiResponse<CreateReservationResponse> expectedResponse = new ApiResponse<>();
+        ApiResponse<ReservationConfirmation> expectedResponse = new ApiResponse<>();
         expectedResponse.setStatus(HttpStatus.BAD_REQUEST);
 
-        ApiResponse<CreateReservationResponse> actualResponse = reservationController.createReservation(reservationRequest);
+        ApiResponse<ReservationConfirmation> actualResponse = reservationController.createReservation(reservationRequest);
 
         assertEquals(expectedResponse.getStatus(), actualResponse.getStatus());
     }
@@ -114,10 +123,10 @@ class ApiReservationControllerTest {
 
         when(reservationService.createReservation(reservationRequest)).thenThrow(DBException.class);
 
-        ApiResponse<CreateReservationResponse> expectedResponse = new ApiResponse<>();
+        ApiResponse<ReservationConfirmation> expectedResponse = new ApiResponse<>();
         expectedResponse.setStatus(HttpStatus.INTERNAL_SERVER_ERROR);
 
-        ApiResponse<CreateReservationResponse> actualResponse = reservationController.createReservation(reservationRequest);
+        ApiResponse<ReservationConfirmation> actualResponse = reservationController.createReservation(reservationRequest);
 
         assertEquals(expectedResponse.getStatus(), actualResponse.getStatus());
     }

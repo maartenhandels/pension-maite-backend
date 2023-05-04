@@ -3,12 +3,14 @@ package com.pensionmaite.pensionmaitebackend.service.impl;
 import com.pensionmaite.pensionmaitebackend.entity.Reservation;
 import com.pensionmaite.pensionmaitebackend.entity.Room;
 import com.pensionmaite.pensionmaitebackend.events.request.CreateReservationRequest;
+import com.pensionmaite.pensionmaitebackend.events.response.ReservationConfirmation;
 import com.pensionmaite.pensionmaitebackend.exception.DBException;
 import com.pensionmaite.pensionmaitebackend.exception.InvalidRequestException;
 import com.pensionmaite.pensionmaitebackend.repository.ReservationRepo;
 import com.pensionmaite.pensionmaitebackend.service.PricingService;
 import com.pensionmaite.pensionmaitebackend.service.ReservationService;
 import com.pensionmaite.pensionmaitebackend.service.RoomService;
+import com.pensionmaite.pensionmaitebackend.util.ReservationCodeGenerator;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -33,10 +35,10 @@ public class ReservationServiceImpl implements ReservationService {
 
 
     @Override
-    public Reservation createReservation(CreateReservationRequest createReservationRequest)
+    public ReservationConfirmation createReservation(CreateReservationRequest createReservationRequest)
             throws InvalidRequestException, DBException {
 
-        log.debug(createReservationRequest);
+        log.debug("createReservationRequest: {}", createReservationRequest);
 
         Map<String, Integer> requestedRoomTypes = createReservationRequest.getRoomTypes();
         log.debug("Room Types: {}", requestedRoomTypes);
@@ -65,6 +67,7 @@ public class ReservationServiceImpl implements ReservationService {
 
         // Create the Reservation Object
         Reservation reservation = new Reservation(
+                ReservationCodeGenerator.generateReservationCode(),
                 createReservationRequest.getCheckinDate(),
                 createReservationRequest.getCheckoutDate(),
                 createReservationRequest.getContactData(),
@@ -74,11 +77,24 @@ public class ReservationServiceImpl implements ReservationService {
         );
 
         // Save into the db
+        reservation = reservationRepo.save(reservation);
+
         try {
-            return reservationRepo.save(reservation);
+            return new ReservationConfirmation(reservation);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw new DBException("Something went wrong while processing the request");
         }
+    }
+
+    @Override
+    public Optional<ReservationConfirmation> getReservationDetails(String email, String reservationCode) {
+        Optional<Reservation> reservation = reservationRepo.findById(reservationCode);
+
+        if (reservation.isPresent()) {
+            return Optional.of(new ReservationConfirmation(reservation.get()));
+        }
+
+        return Optional.empty();
     }
 }

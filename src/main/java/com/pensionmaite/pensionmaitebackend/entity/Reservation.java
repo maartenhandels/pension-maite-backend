@@ -20,9 +20,7 @@ import java.util.Set;
 public class Reservation {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "reservation_seq_generator")
-    @SequenceGenerator(name = "reservation_seq_generator", sequenceName = "seq_reservation", allocationSize = 1)
-    private Long reservationId;
+    private String reservationId;
 
     private LocalDate checkinDate;
 
@@ -47,8 +45,9 @@ public class Reservation {
             inverseJoinColumns = @JoinColumn(name = "roomNumber"))
     private Set<Room> reservationRooms;
 
-    public Reservation(LocalDate checkinDate, LocalDate checkoutDate, ContactData contactData,
+    public Reservation(String reservationId, LocalDate checkinDate, LocalDate checkoutDate, ContactData contactData,
                        Timestamp reservationDate, BigDecimal totalPrice, Set<Room> reservationRooms) {
+        this.reservationId = reservationId;
         this.checkinDate = checkinDate;
         this.checkoutDate = checkoutDate;
         if (contactData != null) {

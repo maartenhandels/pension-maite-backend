@@ -9,7 +9,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Repository
-public interface ReservationRepo extends CrudRepository<Reservation, Long> {
+public interface ReservationRepo extends CrudRepository<Reservation, String> {
 
     @Query("SELECT r FROM Reservation r WHERE" +
             "(r.checkinDate >= ?1 and r.checkinDate <  ?2) or" +
