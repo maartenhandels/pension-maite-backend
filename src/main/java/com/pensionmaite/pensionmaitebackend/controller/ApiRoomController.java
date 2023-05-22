@@ -20,7 +20,7 @@ import java.util.List;
 
 @Log4j2
 @RestController
-@RequestMapping("/api/room")
+@RequestMapping("/api/v1/room")
 public class ApiRoomController {
 
     @Autowired

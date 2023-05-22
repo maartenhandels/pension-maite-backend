@@ -19,7 +19,7 @@ import java.util.Optional;
 
 @Log4j2
 @RestController
-@RequestMapping("/api/reservation")
+@RequestMapping("/api/v1/reservation")
 public class ApiReservationController {
 
     @Autowired
