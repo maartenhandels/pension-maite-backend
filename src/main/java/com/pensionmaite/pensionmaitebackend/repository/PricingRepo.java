@@ -19,11 +19,11 @@ public interface PricingRepo extends CrudRepository<Pricing, Long> {
             "JOIN RoomType rt ON p.roomType.id = rt.id " +
             "WHERE rt.name = :roomTypeName " +
             "AND ((" +
-            "   p.startDate <= to_date(:endDate, 'yyyy-MM-dd') " +
-            "   AND (p.endDate IS NULL OR p.endDate >= to_date(:startDate, 'yyyy-MM-dd'))) " +
+            "   p.startDate <= :endDate " +
+            "   AND (p.endDate IS NULL OR p.endDate >= :startDate)) " +
             "OR (" +
-            "   to_date(:startDate, 'yyyy-MM-dd') <= p.endDate " +
-            "   AND to_date(:endDate, 'yyyy-MM-dd') >= p.startDate" +
+            "   :startDate <= p.endDate " +
+            "   AND :endDate >= p.startDate" +
             "))")
     List<Pricing> findOverlappingPricingsForRoomType(String roomTypeName, LocalDate startDate, LocalDate endDate);
 

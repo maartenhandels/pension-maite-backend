@@ -2,16 +2,24 @@ package com.pensionmaite.pensionmaitebackend.entity;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.pensionmaite.pensionmaitebackend.model.ContactData;
-import lombok.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.Table;
 
-import javax.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.Set;
 
-@Getter
-@Setter
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
