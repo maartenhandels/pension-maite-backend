@@ -1,9 +1,9 @@
 package com.pensionmaite.pensionmaitebackend.service;
 
-import com.pensionmaite.pensionmaitebackend.entity.Room;
 import com.pensionmaite.pensionmaitebackend.events.request.CreateRoomRequest;
-import com.pensionmaite.pensionmaitebackend.events.response.AvailableRoomResponse;
-import com.pensionmaite.pensionmaitebackend.events.response.CreateRoomResponse;
+import com.pensionmaite.pensionmaitebackend.events.response.AvailableRoom;
+import com.pensionmaite.pensionmaitebackend.events.response.NewRoom;
+import com.pensionmaite.pensionmaitebackend.events.response.RoomInfo;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -11,14 +11,16 @@ import java.util.Map;
 
 public interface RoomService {
 
-    CreateRoomResponse createRoom(CreateRoomRequest createRoomRequest);
+    List<RoomInfo> getAllRooms();
 
-    AvailableRoomResponse processAvailableRoomsRequest(LocalDate checkinDate, LocalDate checkoutDate);
+    NewRoom createRoom(CreateRoomRequest createRoomRequest);
 
-    List<Room> getAvailableRooms(LocalDate checkinDate, LocalDate checkoutDate);
+    AvailableRoom processAvailableRoomsRequest(LocalDate checkinDate, LocalDate checkoutDate);
 
-    Map<String, List<Room>> getAvailableRoomsByTypes(LocalDate checkinDate, LocalDate checkoutDate, List<String> roomTypes);
+    List<com.pensionmaite.pensionmaitebackend.entity.Room> getAvailableRooms(LocalDate checkinDate, LocalDate checkoutDate);
 
-    boolean areRoomsAvailable(List<Room> rooms, LocalDate checkinDate, LocalDate checkoutDate);
+    Map<String, List<com.pensionmaite.pensionmaitebackend.entity.Room>> getAvailableRoomsByTypes(LocalDate checkinDate, LocalDate checkoutDate, List<String> roomTypes);
+
+    boolean areRoomsAvailable(List<com.pensionmaite.pensionmaitebackend.entity.Room> rooms, LocalDate checkinDate, LocalDate checkoutDate);
 }
 

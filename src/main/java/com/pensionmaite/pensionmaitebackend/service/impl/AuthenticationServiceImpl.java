@@ -6,7 +6,7 @@ import com.pensionmaite.pensionmaitebackend.entity.User;
 import com.pensionmaite.pensionmaitebackend.enums.JwtClaim;
 import com.pensionmaite.pensionmaitebackend.events.request.AuthenticationRequest;
 import com.pensionmaite.pensionmaitebackend.events.request.RegisterRequest;
-import com.pensionmaite.pensionmaitebackend.events.response.AuthenticationResponse;
+import com.pensionmaite.pensionmaitebackend.events.response.Authentication;
 import com.pensionmaite.pensionmaitebackend.repository.UserRepo;
 import com.pensionmaite.pensionmaitebackend.service.AuthenticationService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -35,7 +35,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
 
     @Override
-    public AuthenticationResponse register(RegisterRequest registerRequest) {
+    public Authentication register(RegisterRequest registerRequest) {
         User user = User.builder()
                 .firstName(registerRequest.getFirstname())
                 .lastName(registerRequest.getLastname())
@@ -47,14 +47,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         Map<String, Object> roleClaim = Map.of(JwtClaim.ROLE.getClaimName(), user.getRole().name());
         String jwtToken = jwtService.generateToken(roleClaim, user);
         String refreshToken = jwtService.generateRefreshToken(user);
-        return AuthenticationResponse.builder()
+        return Authentication.builder()
                 .accessToken(jwtToken)
                 .refreshToken(refreshToken)
                 .build();
     }
 
     @Override
-    public AuthenticationResponse authenticate(AuthenticationRequest authenticationRequest) {
+    public Authentication authenticate(AuthenticationRequest authenticationRequest) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         authenticationRequest.getEmail(),
@@ -67,7 +67,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         String refreshToken = jwtService.generateRefreshToken(user);
         log.info("Access Token {}", jwtToken);
         log.info("Refresh Token {}", refreshToken);
-        return AuthenticationResponse.builder()
+        return Authentication.builder()
                 .accessToken(jwtToken)
                 .refreshToken(refreshToken)
                 .build();
@@ -87,7 +87,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             UserDetails user = userRepo.findByEmail(userEmail).orElseThrow();
             if (jwtService.isTokenValid(refreshToken, user)) {
                 String accessToken = jwtService.generateToken(user);
-                AuthenticationResponse authResponse = AuthenticationResponse.builder()
+                Authentication authResponse = Authentication.builder()
                         .accessToken(accessToken)
                         .refreshToken(refreshToken)
                         .build();

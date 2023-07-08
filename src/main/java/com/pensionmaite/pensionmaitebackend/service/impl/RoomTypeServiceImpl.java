@@ -1,8 +1,7 @@
 package com.pensionmaite.pensionmaitebackend.service.impl;
 
-import com.pensionmaite.pensionmaitebackend.entity.RoomType;
 import com.pensionmaite.pensionmaitebackend.events.request.CreateRoomTypeRequest;
-import com.pensionmaite.pensionmaitebackend.events.response.CreateRoomTypeResponse;
+import com.pensionmaite.pensionmaitebackend.events.response.NewRoomType;
 import com.pensionmaite.pensionmaitebackend.exception.UniqueConstraintException;
 import com.pensionmaite.pensionmaitebackend.repository.RoomTypeRepo;
 import com.pensionmaite.pensionmaitebackend.service.RoomTypeService;
@@ -20,7 +19,7 @@ public class RoomTypeServiceImpl implements RoomTypeService {
     RoomTypeRepo roomTypeRepo;
 
     @Override
-    public CreateRoomTypeResponse createRoomType(CreateRoomTypeRequest request) throws UniqueConstraintException {
+    public NewRoomType createRoomType(CreateRoomTypeRequest request) throws UniqueConstraintException {
 
         log.debug("CreateRoomTypeRequest: {}", request);
 
@@ -30,16 +29,16 @@ public class RoomTypeServiceImpl implements RoomTypeService {
         }
 
         // Create a new room type in the db if name is unique
-        RoomType roomType = new RoomType(request.getName().toUpperCase(),
+        com.pensionmaite.pensionmaitebackend.entity.RoomType roomType = new com.pensionmaite.pensionmaitebackend.entity.RoomType(request.getName().toUpperCase(),
                 request.getCapacity(),
                 request.getImageFilename());
         roomType = roomTypeRepo.save(roomType);
 
-        return new CreateRoomTypeResponse(roomType);
+        return new NewRoomType(roomType);
     }
 
     @Override
-    public Optional<RoomType> getRoomTypeByName(String roomType) {
+    public Optional<com.pensionmaite.pensionmaitebackend.entity.RoomType> getRoomTypeByName(String roomType) {
         return roomTypeRepo.findByName(roomType);
     }
 }

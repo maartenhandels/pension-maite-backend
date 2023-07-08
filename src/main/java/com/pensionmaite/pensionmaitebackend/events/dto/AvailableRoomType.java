@@ -1,4 +1,4 @@
-package com.pensionmaite.pensionmaitebackend.dto;
+package com.pensionmaite.pensionmaitebackend.events.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

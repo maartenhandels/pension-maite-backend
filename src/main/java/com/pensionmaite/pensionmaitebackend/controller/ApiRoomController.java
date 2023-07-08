@@ -1,7 +1,7 @@
 package com.pensionmaite.pensionmaitebackend.controller;
 
 import com.pensionmaite.pensionmaitebackend.events.response.ApiResponse;
-import com.pensionmaite.pensionmaitebackend.events.response.AvailableRoomResponse;
+import com.pensionmaite.pensionmaitebackend.events.response.AvailableRoom;
 import com.pensionmaite.pensionmaitebackend.exception.InvalidRequestException;
 import com.pensionmaite.pensionmaitebackend.service.RoomService;
 
@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
-import java.util.List;
 
 @Log4j2
 @RestController
@@ -27,10 +26,10 @@ public class ApiRoomController {
     RoomService roomService;
 
     @GetMapping("/get-available")
-    private ApiResponse<AvailableRoomResponse> getAvailableRooms(@RequestParam(required = true) String checkinDate,
-                                                                        @RequestParam(required = true) String checkoutDate) {
+    private ApiResponse<AvailableRoom> getAvailableRooms(@RequestParam(required = true) String checkinDate,
+                                                         @RequestParam(required = true) String checkoutDate) {
 
-        ApiResponse<AvailableRoomResponse> response = new ApiResponse<>();
+        ApiResponse<AvailableRoom> response = new ApiResponse<>();
 
         boolean badRequest = false;
         LocalDate parsedCheckinDate = null;

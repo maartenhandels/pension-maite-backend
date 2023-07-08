@@ -1,12 +1,12 @@
 package com.pensionmaite.pensionmaitebackend.events.response;
 
-import com.pensionmaite.pensionmaitebackend.dto.AvailableRoomType;
+import com.pensionmaite.pensionmaitebackend.events.dto.AvailableRoomType;
 import lombok.Data;
 
 import java.util.List;
 
 @Data
-public class AvailableRoomResponse {
+public class AvailableRoom {
 
     List<AvailableRoomType> availableRoomTypes;
 

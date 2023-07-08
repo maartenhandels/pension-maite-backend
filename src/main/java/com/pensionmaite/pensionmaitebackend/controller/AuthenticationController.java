@@ -2,7 +2,7 @@ package com.pensionmaite.pensionmaitebackend.controller;
 
 import com.pensionmaite.pensionmaitebackend.events.request.AuthenticationRequest;
 import com.pensionmaite.pensionmaitebackend.events.request.RegisterRequest;
-import com.pensionmaite.pensionmaitebackend.events.response.AuthenticationResponse;
+import com.pensionmaite.pensionmaitebackend.events.response.Authentication;
 import com.pensionmaite.pensionmaitebackend.service.AuthenticationService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -23,12 +23,12 @@ public class AuthenticationController {
     private AuthenticationService authenticationService;
 
     @PostMapping("/register")
-    public ResponseEntity<AuthenticationResponse> register(@RequestBody RegisterRequest registerRequest) {
+    public ResponseEntity<Authentication> register(@RequestBody RegisterRequest registerRequest) {
         return ResponseEntity.ok(authenticationService.register(registerRequest));
     }
 
     @PostMapping("/authenticate")
-    public ResponseEntity<AuthenticationResponse> register(@RequestBody AuthenticationRequest authenticationRequest) {
+    public ResponseEntity<Authentication> register(@RequestBody AuthenticationRequest authenticationRequest) {
         return ResponseEntity.ok(authenticationService.authenticate(authenticationRequest));
     }
 

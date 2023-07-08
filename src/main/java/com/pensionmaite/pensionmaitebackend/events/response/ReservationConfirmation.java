@@ -1,6 +1,6 @@
 package com.pensionmaite.pensionmaitebackend.events.response;
 
-import com.pensionmaite.pensionmaitebackend.dto.ReservedRoomType;
+import com.pensionmaite.pensionmaitebackend.events.dto.ReservedRoomType;
 import com.pensionmaite.pensionmaitebackend.entity.Reservation;
 import com.pensionmaite.pensionmaitebackend.model.ContactData;
 import lombok.AllArgsConstructor;

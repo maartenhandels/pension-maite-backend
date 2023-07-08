@@ -1,6 +1,5 @@
 package com.pensionmaite.pensionmaitebackend.events.response;
 
-import com.pensionmaite.pensionmaitebackend.entity.RoomType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -8,7 +7,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Getter
 @Setter
-public class CreateRoomTypeResponse {
+public class NewRoomType {
 
     public Integer id;
 
@@ -18,7 +17,7 @@ public class CreateRoomTypeResponse {
 
     public String imageFilename;
 
-    public CreateRoomTypeResponse(RoomType roomType) {
+    public NewRoomType(com.pensionmaite.pensionmaitebackend.entity.RoomType roomType) {
         this.id = roomType.getId();
         this.name = roomType.getName();
         this.capacity = roomType.getCapacity();

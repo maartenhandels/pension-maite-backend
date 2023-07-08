@@ -1,4 +1,4 @@
-package com.pensionmaite.pensionmaitebackend.dto;
+package com.pensionmaite.pensionmaitebackend.events.dto;
 
 import com.pensionmaite.pensionmaitebackend.entity.Room;
 import lombok.Data;

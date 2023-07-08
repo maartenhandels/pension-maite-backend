@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 
 @AllArgsConstructor
 @Data
-public class CreateDefaultPricingResponse {
+public class NewDefaultPricing {
 
     private Long id;
 
@@ -16,7 +16,7 @@ public class CreateDefaultPricingResponse {
 
     private BigDecimal price;
 
-    public CreateDefaultPricingResponse(Pricing pricing) {
+    public NewDefaultPricing(Pricing pricing) {
         this(pricing.getId(),
                 pricing.getRoomType().getName(),
                 pricing.getPrice());

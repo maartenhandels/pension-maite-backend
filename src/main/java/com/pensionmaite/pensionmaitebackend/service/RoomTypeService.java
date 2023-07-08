@@ -1,14 +1,13 @@
 package com.pensionmaite.pensionmaitebackend.service;
 
-import com.pensionmaite.pensionmaitebackend.entity.RoomType;
 import com.pensionmaite.pensionmaitebackend.events.request.CreateRoomTypeRequest;
-import com.pensionmaite.pensionmaitebackend.events.response.CreateRoomTypeResponse;
+import com.pensionmaite.pensionmaitebackend.events.response.NewRoomType;
 
 import java.util.Optional;
 
 public interface RoomTypeService {
 
-    CreateRoomTypeResponse createRoomType(CreateRoomTypeRequest createRoomTypeRequest);
+    NewRoomType createRoomType(CreateRoomTypeRequest createRoomTypeRequest);
 
-    Optional<RoomType> getRoomTypeByName(String roomType);
+    Optional<com.pensionmaite.pensionmaitebackend.entity.RoomType> getRoomTypeByName(String roomType);
 }

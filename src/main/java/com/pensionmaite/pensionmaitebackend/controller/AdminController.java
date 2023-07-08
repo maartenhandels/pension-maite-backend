@@ -13,10 +13,7 @@ import com.pensionmaite.pensionmaitebackend.service.RoomTypeService;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
@@ -35,10 +32,18 @@ public class AdminController {
     @Autowired
     PricingService pricingService;
 
-    @PostMapping("/room/create")
-    private ApiResponse<CreateRoomResponse> createRoom(@RequestBody CreateRoomRequest createRoomRequest) {
+    @GetMapping("/rooms")
+    private ApiResponse<List<RoomInfo>> getAllRooms() {
+        ApiResponse<List<RoomInfo>> response = new ApiResponse<>();
+        response.setData(roomService.getAllRooms());
+        response.setStatus(HttpStatus.OK);
+        return response;
+    }
 
-        ApiResponse<CreateRoomResponse> response = new ApiResponse<>();
+    @PostMapping("/room/create")
+    private ApiResponse<NewRoom> createRoom(@RequestBody CreateRoomRequest createRoomRequest) {
+
+        ApiResponse<NewRoom> response = new ApiResponse<>();
 
         try {
             response.setData(roomService.createRoom(createRoomRequest));
@@ -54,9 +59,9 @@ public class AdminController {
 
 
     @PostMapping("/room/type/create")
-    public ApiResponse<CreateRoomTypeResponse> createRoomType(@RequestBody CreateRoomTypeRequest request) {
+    public ApiResponse<NewRoomType> createRoomType(@RequestBody CreateRoomTypeRequest request) {
 
-        ApiResponse<CreateRoomTypeResponse> response = new ApiResponse();
+        ApiResponse<NewRoomType> response = new ApiResponse();
 
         try {
             response.setData(roomTypeService.createRoomType(request));
@@ -70,9 +75,9 @@ public class AdminController {
     }
 
     @PostMapping("/room/pricing/add")
-    public ApiResponse<CreatePricingResponse> createRoomType(@RequestBody CreatePricingRequest request) {
+    public ApiResponse<NewPricing> createRoomType(@RequestBody CreatePricingRequest request) {
 
-        ApiResponse<CreatePricingResponse> response = new ApiResponse();
+        ApiResponse<NewPricing> response = new ApiResponse();
         Optional<List<String>> errors = CreatePricingRequest.validate(request);
         if (errors.isPresent()) {
             response.setError(errors.get().get(0));
@@ -81,7 +86,7 @@ public class AdminController {
         }
 
         try {
-            response.setData(new CreatePricingResponse(pricingService.createPricing(request)));
+            response.setData(new NewPricing(pricingService.createPricing(request)));
             response.setStatus(HttpStatus.OK);
         } catch (UniqueConstraintException | InvalidRequestException e) {
             log.error(e.getMessage(), e);
@@ -93,9 +98,9 @@ public class AdminController {
     }
 
     @PostMapping("/room/pricing/add-default")
-    public ApiResponse<CreateDefaultPricingResponse> createRoomType(@RequestBody CreateDefaultPricingRequest request) {
+    public ApiResponse<NewDefaultPricing> createRoomType(@RequestBody CreateDefaultPricingRequest request) {
 
-        ApiResponse<CreateDefaultPricingResponse> response = new ApiResponse();
+        ApiResponse<NewDefaultPricing> response = new ApiResponse();
         Optional<List<String>> errors = CreateDefaultPricingRequest.validate(request);
         if (errors.isPresent()) {
             response.setError(errors.get().get(0));
@@ -104,7 +109,7 @@ public class AdminController {
         }
 
         try {
-            response.setData(new CreateDefaultPricingResponse(pricingService.createDefaultPricing(
+            response.setData(new NewDefaultPricing(pricingService.createDefaultPricing(
                     request.getRoomType(),
                     request.getPrice())));
             response.setStatus(HttpStatus.OK);

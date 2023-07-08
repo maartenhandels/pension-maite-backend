@@ -8,7 +8,7 @@ import java.time.LocalDate;
 import java.util.Map;
 import java.util.Set;
 
-import com.pensionmaite.pensionmaitebackend.dto.ReservedRoomType;
+import com.pensionmaite.pensionmaitebackend.events.dto.ReservedRoomType;
 import com.pensionmaite.pensionmaitebackend.entity.Room;
 import com.pensionmaite.pensionmaitebackend.entity.RoomType;
 import com.pensionmaite.pensionmaitebackend.model.ContactData;

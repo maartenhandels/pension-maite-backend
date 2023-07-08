@@ -1,15 +1,14 @@
 package com.pensionmaite.pensionmaitebackend.service.impl;
 
-import com.pensionmaite.pensionmaitebackend.dto.AvailableRoomType;
-import com.pensionmaite.pensionmaitebackend.entity.Pricing;
-import com.pensionmaite.pensionmaitebackend.entity.Reservation;
 import com.pensionmaite.pensionmaitebackend.entity.Room;
+import com.pensionmaite.pensionmaitebackend.events.dto.AvailableRoomType;
+import com.pensionmaite.pensionmaitebackend.entity.Reservation;
 import com.pensionmaite.pensionmaitebackend.entity.RoomType;
+import com.pensionmaite.pensionmaitebackend.events.response.RoomInfo;
 import com.pensionmaite.pensionmaitebackend.events.request.CreateRoomRequest;
-import com.pensionmaite.pensionmaitebackend.events.response.AvailableRoomResponse;
-import com.pensionmaite.pensionmaitebackend.events.response.CreateRoomResponse;
+import com.pensionmaite.pensionmaitebackend.events.response.AvailableRoom;
+import com.pensionmaite.pensionmaitebackend.events.response.NewRoom;
 import com.pensionmaite.pensionmaitebackend.exception.InvalidRequestException;
-import com.pensionmaite.pensionmaitebackend.exception.ValueNotFoundException;
 import com.pensionmaite.pensionmaitebackend.model.RoomTypeDetails;
 import com.pensionmaite.pensionmaitebackend.repository.ReservationRepo;
 import com.pensionmaite.pensionmaitebackend.repository.RoomRepo;
@@ -20,10 +19,8 @@ import com.pensionmaite.pensionmaitebackend.util.DatesUtil;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -32,18 +29,33 @@ import java.util.stream.Collectors;
 @Service
 public class RoomServiceImpl implements RoomService {
 
-    @Autowired
-    RoomRepo roomRepo;
+    private final RoomRepo roomRepo;
+    private final RoomTypeRepo roomTypeRepo;
+    private final ReservationRepo reservationRepo;
+    private final PricingService pricingService;
 
-    @Autowired
-    RoomTypeRepo roomTypeRepo;
+    public RoomServiceImpl(RoomRepo roomRepo, RoomTypeRepo roomTypeRepo, ReservationRepo reservationRepo,
+                           PricingService pricingService) {
+        this.roomRepo = roomRepo;
+        this.roomTypeRepo = roomTypeRepo;
+        this.reservationRepo = reservationRepo;
+        this.pricingService = pricingService;
+    }
 
-    @Autowired
-    ReservationRepo reservationRepo;
-
-    @Autowired
-    PricingService pricingService;
-
+    /**
+     * Returns a
+     * @return
+     */
+    @Override
+    public List<RoomInfo> getAllRooms() {
+        return roomRepo.findAll()
+                .stream()
+                .map(room -> new RoomInfo(
+                        room.getRoomNumber(),
+                        room.getRoomType().getName(),
+                        room.getRoomType().getCapacity())
+                ).collect(Collectors.toList());
+    }
 
     /**
      * Creates a new {@code Room} object based on the provided {@code CreateRoomRequest} and saves it to the repository.
@@ -53,7 +65,7 @@ public class RoomServiceImpl implements RoomService {
      * @throws InvalidRequestException if the provided room type is invalid or if the provided room number is not unique
      */
     @Override
-    public CreateRoomResponse createRoom(CreateRoomRequest createRoomRequest) {
+    public NewRoom createRoom(CreateRoomRequest createRoomRequest) {
 
         // Retrieve the RoomType object associated with the provided room type name
         Optional<RoomType> roomType = roomTypeRepo.findByName(createRoomRequest.getRoomType().toUpperCase().trim());
@@ -69,19 +81,21 @@ public class RoomServiceImpl implements RoomService {
         }
 
         // Create a new Room object based on the provided details
-        Room room = new Room(
+        Room room = new com.pensionmaite.pensionmaitebackend.entity.Room(
                 createRoomRequest.getRoomNumber(),
                 roomType.get(),
-                createRoomRequest.getDescription());
+                createRoomRequest.getDescription()
+        );
 
         // Save the new Room object to the repository
         room = roomRepo.save(room);
 
         // Create and return a new CreateRoomResponse object containing the details of the newly created room
-        return new CreateRoomResponse(
+        return new NewRoom(
                 room.getRoomNumber(),
                 room.getRoomType().getName(),
-                room.getDescription());
+                room.getDescription()
+        );
     }
 
     /**
@@ -93,17 +107,17 @@ public class RoomServiceImpl implements RoomService {
      * given dates
      */
     @Override
-    public AvailableRoomResponse processAvailableRoomsRequest(LocalDate checkinDate, LocalDate checkoutDate) {
+    public AvailableRoom processAvailableRoomsRequest(LocalDate checkinDate, LocalDate checkoutDate) {
 
-        AvailableRoomResponse availableRoomResponse = new AvailableRoomResponse();
+        AvailableRoom availableRoom = new AvailableRoom();
 
-        List<Room> availableRooms = getAvailableRooms(checkinDate, checkoutDate);
-        availableRoomResponse.setAvailableRoomTypes(
+        List<com.pensionmaite.pensionmaitebackend.entity.Room> availableRooms = getAvailableRooms(checkinDate, checkoutDate);
+        availableRoom.setAvailableRoomTypes(
                 parseToAvailableRoomTypes(availableRooms, checkinDate, checkoutDate));
 
-        availableRoomResponse.setNumberOfNights(DatesUtil.getNumberOfNights(checkinDate, checkoutDate));
+        availableRoom.setNumberOfNights(DatesUtil.getNumberOfNights(checkinDate, checkoutDate));
 
-        return availableRoomResponse;
+        return availableRoom;
     }
 
     /**
@@ -114,7 +128,7 @@ public class RoomServiceImpl implements RoomService {
      * @return a list of available {@code Room} objects
      */
     @Override
-    public List<Room> getAvailableRooms(LocalDate checkinDate, LocalDate checkoutDate) {
+    public List<com.pensionmaite.pensionmaitebackend.entity.Room> getAvailableRooms(LocalDate checkinDate, LocalDate checkoutDate) {
 
         log.debug("Finding available rooms for dates {} to {}", checkinDate, checkoutDate);
 
@@ -122,15 +136,15 @@ public class RoomServiceImpl implements RoomService {
         log.debug("Reserved Room Numbers: " + reservedRoomNumbers);
 
         // Retrieve all rooms from the room repository and filter out the reserved rooms
-        List<Room> rooms = IterableUtils.toList(roomRepo.findAll());
+        List<com.pensionmaite.pensionmaitebackend.entity.Room> rooms = IterableUtils.toList(roomRepo.findAll());
 
         return filterReservedRooms(rooms, reservedRoomNumbers);
     }
 
     @Override
-    public Map<String, List<Room>> getAvailableRoomsByTypes(LocalDate checkinDate,
-                                                            LocalDate checkoutDate,
-                                                            List<String> roomTypes) {
+    public Map<String, List<com.pensionmaite.pensionmaitebackend.entity.Room>> getAvailableRoomsByTypes(LocalDate checkinDate,
+                                                                                                        LocalDate checkoutDate,
+                                                                                                        List<String> roomTypes) {
 
         log.debug("Finding available rooms for dates {} to {}", checkinDate, checkoutDate);
 
@@ -138,7 +152,7 @@ public class RoomServiceImpl implements RoomService {
         log.debug("Reserved Room Numbers: " + reservedRoomNumbers);
 
         // Retrieve all rooms from the room repository with matching type and filter out the reserved rooms
-        List<Room> rooms = IterableUtils.toList(roomRepo.findByCategoryNames(roomTypes));
+        List<com.pensionmaite.pensionmaitebackend.entity.Room> rooms = IterableUtils.toList(roomRepo.findByCategoryNames(roomTypes));
 
         rooms = filterReservedRooms(rooms, reservedRoomNumbers);
 
@@ -154,9 +168,9 @@ public class RoomServiceImpl implements RoomService {
      * @return {@code true} if all the rooms are available during the specified period, {@code false} otherwise
      */
     @Override
-    public boolean areRoomsAvailable(List<Room> rooms, LocalDate checkinDate, LocalDate checkoutDate) {
+    public boolean areRoomsAvailable(List<com.pensionmaite.pensionmaitebackend.entity.Room> rooms, LocalDate checkinDate, LocalDate checkoutDate) {
 
-        for (Room room : rooms) {
+        for (com.pensionmaite.pensionmaitebackend.entity.Room room : rooms) {
             if(!isRoomAvailable(room, checkinDate, checkoutDate)) {
                 return false;
             }
@@ -179,14 +193,14 @@ public class RoomServiceImpl implements RoomService {
         for (Reservation reservation:reservations) {
             reservedRoomNumbers.addAll(reservation.getReservationRooms()
                     .stream()
-                    .map(Room::getRoomNumber)
+                    .map(com.pensionmaite.pensionmaitebackend.entity.Room::getRoomNumber)
                     .collect(Collectors.toSet()));
         }
 
         return reservedRoomNumbers;
     }
 
-    private List<Room> filterReservedRooms(List<Room> rooms, Set<Integer> reservedRoomNumbers) {
+    private List<com.pensionmaite.pensionmaitebackend.entity.Room> filterReservedRooms(List<com.pensionmaite.pensionmaitebackend.entity.Room> rooms, Set<Integer> reservedRoomNumbers) {
         return rooms.stream()
                 .filter(r -> !reservedRoomNumbers.contains(r.getRoomNumber()))
                 .collect(Collectors.toList());
@@ -199,12 +213,12 @@ public class RoomServiceImpl implements RoomService {
      * @return a map where each key is a room type name and the corresponding value
      *         is a list of rooms that have that room type.
      */
-    private Map<String, List<Room>> mapRoomsByType(List<Room> rooms) {
-        Map<String, List<Room>> result = new HashMap<>();
+    private Map<String, List<com.pensionmaite.pensionmaitebackend.entity.Room>> mapRoomsByType(List<com.pensionmaite.pensionmaitebackend.entity.Room> rooms) {
+        Map<String, List<com.pensionmaite.pensionmaitebackend.entity.Room>> result = new HashMap<>();
 
-        for (Room room : rooms) {
+        for (com.pensionmaite.pensionmaitebackend.entity.Room room : rooms) {
             String roomTypeName = room.getRoomType().getName();
-            List<Room> matchingRooms = result.getOrDefault(roomTypeName, new ArrayList<>());
+            List<com.pensionmaite.pensionmaitebackend.entity.Room> matchingRooms = result.getOrDefault(roomTypeName, new ArrayList<>());
             matchingRooms.add(room);
             result.put(roomTypeName, matchingRooms);
         }
@@ -220,14 +234,14 @@ public class RoomServiceImpl implements RoomService {
      * @param checkoutDate the check-out date for the room availability period
      * @return {@code true} if the specified {@code Room} object is available for booking, {@code false} otherwise
      */
-    private boolean isRoomAvailable(Room room, LocalDate checkinDate, LocalDate checkoutDate) {
+    private boolean isRoomAvailable(com.pensionmaite.pensionmaitebackend.entity.Room room, LocalDate checkinDate, LocalDate checkoutDate) {
 
         // Retrieve a list of reservations between the provided check-in and check-out dates
         List<Reservation> reservations = reservationRepo.findReservationsBetweenDates(checkinDate, checkoutDate);
 
         // Iterate through each reservation and check if the specified room is reserved
         for (Reservation reservation:reservations) {
-            List<Integer> roomNumbers = reservation.getReservationRooms().stream().map(Room::getRoomNumber).collect(Collectors.toList());
+            List<Integer> roomNumbers = reservation.getReservationRooms().stream().map(com.pensionmaite.pensionmaitebackend.entity.Room::getRoomNumber).collect(Collectors.toList());
             log.debug("RoomNumbers: {}", roomNumbers);
             // If the specified room is reserved, return false
             if (roomNumbers.contains(room.getRoomNumber())) {
@@ -238,7 +252,7 @@ public class RoomServiceImpl implements RoomService {
         return true;
     }
 
-    private List<AvailableRoomType> parseToAvailableRoomTypes(List<Room> rooms,
+    private List<AvailableRoomType> parseToAvailableRoomTypes(List<com.pensionmaite.pensionmaitebackend.entity.Room> rooms,
                                                               LocalDate checkinDate,
                                                               LocalDate checkoutDate) {
 
@@ -264,11 +278,11 @@ public class RoomServiceImpl implements RoomService {
      * @param rooms a List of Room objects to count by type
      * @return a HashMap with keys representing each room type and values representing the number of rooms of that type
      */
-    private Map<String, RoomTypeDetails> getRoomsByType(List<Room> rooms) {
+    private Map<String, RoomTypeDetails> getRoomsByType(List<com.pensionmaite.pensionmaitebackend.entity.Room> rooms) {
         // create a new HashMap to store the room type counts
         Map<String, RoomTypeDetails> roomTypeMap = new HashMap<>();
         // loop through each room in the list
-        for (Room room : rooms) {
+        for (com.pensionmaite.pensionmaitebackend.entity.Room room : rooms) {
             RoomType roomType = room.getRoomType();
 
             // check if room type (and room type name) are not null
