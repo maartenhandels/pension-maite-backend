@@ -42,17 +42,9 @@ public class AdminController {
 
     @PostMapping("/room/create")
     private ApiResponse<NewRoom> createRoom(@RequestBody CreateRoomRequest createRoomRequest) {
-
         ApiResponse<NewRoom> response = new ApiResponse<>();
-
-        try {
-            response.setData(roomService.createRoom(createRoomRequest));
-            response.setStatus(HttpStatus.OK);
-        } catch (InvalidRequestException e) {
-            response.setError(e.getMessage());
-            response.setStatus(HttpStatus.BAD_REQUEST);
-        }
-
+        response.setData(roomService.createRoom(createRoomRequest));
+        response.setStatus(HttpStatus.OK);
         return response;
     }
 
